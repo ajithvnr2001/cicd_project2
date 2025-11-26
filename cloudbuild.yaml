@@ -7,24 +7,11 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest']
 
-# 3. Substitute Variable using sed (Correctly Escaped)
-- name: 'ubuntu'
-  entrypoint: 'bash'
-  args:
-  - '-c'
-  - |
-    # We use double quotes so shell variables expand.
-    # We escape the first $ so sed treats it as a literal character to find.
-    sed "s/\\\$PROJECT_ID/$PROJECT_ID/g" k8s-deployment.yaml > k8s-deployment-expanded.yaml
-    
-    echo "--- VERIFYING CONTENT ---"
-    cat k8s-deployment-expanded.yaml
-
-# 4. Deploy using the NEW file
+# 3. Deploy directly (no substitution needed)
 - name: 'gcr.io/cloud-builders/gke-deploy'
   args:
   - 'run'
-  - '--filename=k8s-deployment-expanded.yaml'
+  - '--filename=k8s-deployment.yaml'
   - '--location=us-central1'
   - '--cluster=my-cluster'
 
