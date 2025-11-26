@@ -7,8 +7,8 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest']
 
-# 3. [NEW STEP] Substitute $PROJECT_ID in the YAML file
-# This replaces the variable text in your file with the actual ID
+# 3. Substitute $PROJECT_ID in the YAML file
+# This puts the ACTUAL project ID into the file
 - name: 'ubuntu'
   args: ['sed', '-i', 's/$PROJECT_ID/$PROJECT_ID/g', 'k8s-deployment.yaml']
 
@@ -17,7 +17,8 @@ steps:
   args:
   - 'run'
   - '--filename=k8s-deployment.yaml'
-  - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest'
+  # REMOVED: --image flag.
+  # The file k8s-deployment.yaml now has the correct image path from Step 3.
   - '--location=us-central1'
   - '--cluster=my-cluster'
 
