@@ -7,18 +7,25 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest']
 
-# 3. Substitute $PROJECT_ID in the YAML file
-# This puts the ACTUAL project ID into the file
-- name: 'ubuntu'
-  args: ['sed', '-i', 's/$PROJECT_ID/$PROJECT_ID/g', 'k8s-deployment.yaml']
+# 3. [FIXED STEP] Substitute variables using envsubst
+# This forces the shell to expand $PROJECT_ID before writing the file
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    # We must export the variable so envsubst can see it
+    export PROJECT_ID=$PROJECT_ID
+    # Replace variables in the file and save as a NEW file
+    envsubst < k8s-deployment.yaml > k8s-deployment-expanded.yaml
+    # Verify it worked (this will show in your logs)
+    cat k8s-deployment-expanded.yaml
 
-# 4. Deploy to GKE
+# 4. Deploy to GKE using the NEW file
 - name: 'gcr.io/cloud-builders/gke-deploy'
   args:
   - 'run'
-  - '--filename=k8s-deployment.yaml'
-  # REMOVED: --image flag.
-  # The file k8s-deployment.yaml now has the correct image path from Step 3.
+  - '--filename=k8s-deployment-expanded.yaml'  # Use the new file
   - '--location=us-central1'
   - '--cluster=my-cluster'
 
