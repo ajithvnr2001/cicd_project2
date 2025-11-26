@@ -7,25 +7,22 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest']
 
-# 3. [FIXED STEP] Substitute variables using envsubst
-# This forces the shell to expand $PROJECT_ID before writing the file
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  entrypoint: 'bash'
+# 3. Substitute Variable (Using simple sed)
+# We hardcode the project ID variable logic here
+- name: 'ubuntu'
   args:
+  - 'bash'
   - '-c'
   - |
-    # We must export the variable so envsubst can see it
-    export PROJECT_ID=$PROJECT_ID
-    # Replace variables in the file and save as a NEW file
-    envsubst < k8s-deployment.yaml > k8s-deployment-expanded.yaml
-    # Verify it worked (this will show in your logs)
+    sed "s/\$PROJECT_ID/$PROJECT_ID/g" k8s-deployment.yaml > k8s-deployment-expanded.yaml
+    echo "--- Content of expanded file ---"
     cat k8s-deployment-expanded.yaml
 
-# 4. Deploy to GKE using the NEW file
+# 4. Deploy to GKE
 - name: 'gcr.io/cloud-builders/gke-deploy'
   args:
   - 'run'
-  - '--filename=k8s-deployment-expanded.yaml'  # Use the new file
+  - '--filename=k8s-deployment-expanded.yaml'
   - '--location=us-central1'
   - '--cluster=my-cluster'
 
