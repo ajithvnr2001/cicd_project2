@@ -1,29 +1,29 @@
 steps:
-# 1. Build
+# 1. Build Docker Image
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest', '.']
 
-# 2. Push
+# 2. Push Image
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest']
 
-# 3. Substitute Variable
-- name: 'ubuntu'
+# 3. Substitute variables using envsubst
+# This is the FIX. It forces the shell to replace $PROJECT_ID.
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
   args:
-  - 'bash'
   - '-c'
   - |
-    # Note the double quotes around the sed expression and the variable
-    sed "s/\$PROJECT_ID/$PROJECT_ID/g" k8s-deployment.yaml > k8s-deployment-expanded.yaml
-    
-    echo "--- Verifying Correct Image Path ---"
-    grep "image:" k8s-deployment-expanded.yaml
+    export PROJECT_ID=$PROJECT_ID
+    envsubst < k8s-deployment.yaml > k8s-deployment-expanded.yaml
+    echo "--- CHECKING FILE CONTENT ---"
+    cat k8s-deployment-expanded.yaml
 
-# 4. Deploy
+# 4. Deploy using the NEW file
 - name: 'gcr.io/cloud-builders/gke-deploy'
   args:
   - 'run'
-  - '--filename=k8s-deployment-expanded.yaml'
+  - '--filename=k8s-deployment-expanded.yaml' # IMPORTANT: Use the new file name
   - '--location=us-central1'
   - '--cluster=my-cluster'
 
