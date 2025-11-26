@@ -1,0 +1,21 @@
+steps:
+# 1. Build Docker Image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest', '.']
+
+# 2. Push Image to Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest']
+
+# 3. Deploy to GKE
+# Note: First time failure aaga chance iruku permissions nala
+- name: 'gcr.io/cloud-builders/gke-deploy'
+  args:
+  - 'run'
+  - '--filename=k8s-deployment.yaml'
+  - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest'
+  - '--location=us-central1'
+  - '--cluster=my-cluster'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
