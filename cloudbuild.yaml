@@ -7,8 +7,12 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-app:latest']
 
-# 3. Deploy to GKE
-# Note: First time failure aaga chance iruku permissions nala
+# 3. [NEW STEP] Substitute $PROJECT_ID in the YAML file
+# This replaces the variable text in your file with the actual ID
+- name: 'ubuntu'
+  args: ['sed', '-i', 's/$PROJECT_ID/$PROJECT_ID/g', 'k8s-deployment.yaml']
+
+# 4. Deploy to GKE
 - name: 'gcr.io/cloud-builders/gke-deploy'
   args:
   - 'run'
